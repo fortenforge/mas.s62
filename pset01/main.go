@@ -101,7 +101,7 @@ func (self PublicKey) ToHex() string {
 }
 
 // HexToPubkey takes a string from PublicKey.ToHex() and turns it into a pubkey
-// will return an error if there are non hex characters or if the lenght is wrong.
+// will return an error if there are non hex characters or if the length is wrong.
 func HexToPubkey(s string) (PublicKey, error) {
 	var p PublicKey
 
@@ -222,7 +222,23 @@ func GenerateKey() (SecretKey, PublicKey, error) {
 
 	// Your code here
 	// ===
+	for i := 0; i < 256; i++ {
+		b := make([]byte, 256)
+		_, err := rand.Read(b)
+		if err != nil {
+			return sec, pub, err
+		}
+		sec.ZeroPre[i] = BlockFromByteSlice(b)
+		pub.ZeroHash[i] = sha256.Sum256(sec.ZeroPre[i][:])
 
+		b = make([]byte, 256)
+		_, err = rand.Read(b)
+		if err != nil {
+			return sec, pub, err
+		}
+		sec.OnePre[i] = BlockFromByteSlice(b)
+		pub.OneHash[i] = sha256.Sum256(sec.OnePre[i][:])
+	}
 	// ===
 	return sec, pub, nil
 }
@@ -233,7 +249,14 @@ func Sign(msg Message, sec SecretKey) Signature {
 
 	// Your code here
 	// ===
-
+	msg_hash := sha256.Sum256(msg[:])
+	for i := uint32(0); i < 256; i++ {
+		if msg_hash[i/8] >> (7 - (i%8)) & 0x1 == 0 {
+			sig.Preimage[i] = sec.ZeroPre[i]
+		} else {
+			sig.Preimage[i] = sec.OnePre[i]
+		}
+	}
 	// ===
 	return sig
 }
@@ -244,7 +267,19 @@ func Verify(msg Message, pub PublicKey, sig Signature) bool {
 
 	// Your code here
 	// ===
-
+	flag := true
+	msg_hash := sha256.Sum256(msg[:])
+	for i := uint32(0); i < 256; i++ {
+		sig_hash := sha256.Sum256(sig.Preimage[i][:])
+		if msg_hash[i/8] >> (7 - (i%8)) & 0x1 == 0 {
+			flag = flag && bytes.Equal(sig_hash[:], pub.ZeroHash[i][:])
+		} else {
+			flag = flag && bytes.Equal(sig_hash[:], pub.OneHash[i][:])
+		}
+		if !flag {
+			return false
+		}
+	}
 	// ===
 
 	return true
