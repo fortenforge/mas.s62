@@ -250,9 +250,8 @@ func Sign(msg Message, sec SecretKey) Signature {
 
 	// Your code here
 	// ===
-	msg_hash := sha256.Sum256(msg[:])
 	for i := uint32(0); i < 256; i++ {
-		if msg_hash[i/8] >> (7 - (i%8)) & 0x1 == 0 {
+		if msg[i/8] >> (7 - (i%8)) & 0x1 == 0 {
 			sig.Preimage[i] = sec.ZeroPre[i]
 		} else {
 			sig.Preimage[i] = sec.OnePre[i]
@@ -269,10 +268,9 @@ func Verify(msg Message, pub PublicKey, sig Signature) bool {
 	// Your code here
 	// ===
 	flag := true
-	msg_hash := sha256.Sum256(msg[:])
 	for i := uint32(0); i < 256; i++ {
 		sig_hash := sha256.Sum256(sig.Preimage[i][:])
-		if msg_hash[i/8] >> (7 - (i%8)) & 0x1 == 0 {
+		if msg[i/8] >> (7 - (i%8)) & 0x1 == 0 {
 			flag = flag && bytes.Equal(sig_hash[:], pub.ZeroHash[i][:])
 		} else {
 			flag = flag && bytes.Equal(sig_hash[:], pub.OneHash[i][:])
