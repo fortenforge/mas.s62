@@ -143,32 +143,39 @@ func Forge() (string, Signature, error) {
 	}
 
 	nonce := 0
-	for {
-		f := fmt.Sprintf(msgString, nonce)
-		msg := GetMessageFromString(f)
+	out := make(chan int)
+	for g := 0; g < 4; g++ {
+		go func(nonce int) {
+			for {
+				f := fmt.Sprintf(msgString, nonce)
+				msg := GetMessageFromString(f)
 
-		flag := true
-		for i := uint32(0); i < 256; i++ {
-			if msg[i/8] >> (7 - (i%8)) & 0x1 == 0 {
-				flag = flag && have_zero[i]
-			} else {
-				flag = flag && have_one[i]
+				flag := true
+				for i := uint32(0); i < 256; i++ {
+					if msg[i/8] >> (7 - (i%8)) & 0x1 == 0 {
+						flag = flag && have_zero[i]
+					} else {
+						flag = flag && have_one[i]
+					}
+
+					if !flag {
+						break
+					}
+				}
+				if flag {
+					out <- nonce
+				}
+				nonce++
 			}
-
-			if !flag {
-				break
-			}
-		}
-		if flag {
-			break
-		}
-
-		nonce++
+		}(nonce)
+		nonce += (1 << 24)
 	}
 
+	nonce = <- out
 	f := fmt.Sprintf(msgString, nonce)
 	msg := GetMessageFromString(f)
 	sig = Sign(msg, sec)
+	msgString = f
 	// ==
 
 	return msgString, sig, nil
