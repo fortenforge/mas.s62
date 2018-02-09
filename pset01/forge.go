@@ -119,12 +119,56 @@ func Forge() (string, Signature, error) {
 	fmt.Printf("ok 3: %v\n", Verify(msgslice[2], pub, sig3))
 	fmt.Printf("ok 4: %v\n", Verify(msgslice[3], pub, sig4))
 
-	msgString := "my forged message"
+	msgString := "fortenforge@mit.edu %x"
 	var sig Signature
 
 	// your code here!
 	// ==
-	// Geordi La
+	var sec SecretKey
+	var have_zero []bool
+	var have_one []bool
+	have_zero = make([]bool, 256)
+	have_one = make([]bool, 256)
+
+	for j, msg := range msgslice {
+		for i := uint32(0); i < 256; i++ {
+			if msg[i/8] >> (7 - (i%8)) & 0x1 == 0 {
+				have_zero[i] = true
+				sec.ZeroPre[i] = sigslice[j].Preimage[i]
+			} else {
+				have_one[i] = true
+				sec.OnePre[i] = sigslice[j].Preimage[i]
+			}
+		}
+	}
+
+	nonce := 0
+	for {
+		f := fmt.Sprintf(msgString, nonce)
+		msg := GetMessageFromString(f)
+
+		flag := true
+		for i := uint32(0); i < 256; i++ {
+			if msg[i/8] >> (7 - (i%8)) & 0x1 == 0 {
+				flag = flag && have_zero[i]
+			} else {
+				flag = flag && have_one[i]
+			}
+
+			if !flag {
+				break
+			}
+		}
+		if flag {
+			break
+		}
+
+		nonce++
+	}
+
+	f := fmt.Sprintf(msgString, nonce)
+	msg := GetMessageFromString(f)
+	sig = Sign(msg, sec)
 	// ==
 
 	return msgString, sig, nil
