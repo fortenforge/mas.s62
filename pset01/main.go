@@ -22,6 +22,7 @@ package main
 import (
 	"bytes"
 	"crypto/sha256"
+	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 )
