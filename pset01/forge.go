@@ -142,30 +142,36 @@ func Forge() (string, Signature, error) {
 		}
 	}
 
-	nonce := 0
+	nonce := 2356972754
 	out := make(chan int)
+	kill := make(chan bool)
 	for g := 0; g < 4; g++ {
 		go func(nonce int) {
 			for {
-				f := fmt.Sprintf(msgString, nonce)
-				msg := GetMessageFromString(f)
+				select {
+				case <- kill:
+					return
+				default:
+					f := fmt.Sprintf(msgString, nonce)
+					msg := GetMessageFromString(f)
 
-				flag := true
-				for i := uint32(0); i < 256; i++ {
-					if msg[i/8] >> (7 - (i%8)) & 0x1 == 0 {
-						flag = flag && have_zero[i]
-					} else {
-						flag = flag && have_one[i]
-					}
+					flag := true
+					for i := uint32(0); i < 256; i++ {
+						if msg[i/8] >> (7 - (i%8)) & 0x1 == 0 {
+							flag = flag && have_zero[i]
+						} else {
+							flag = flag && have_one[i]
+						}
 
-					if !flag {
-						break
+						if !flag {
+							break
+						}
 					}
+					if flag {
+						out <- nonce
+					}
+					nonce++
 				}
-				if flag {
-					out <- nonce
-				}
-				nonce++
 			}
 		}(nonce)
 		nonce += (1 << 24)
@@ -176,6 +182,9 @@ func Forge() (string, Signature, error) {
 	msg := GetMessageFromString(f)
 	sig = Sign(msg, sec)
 	msgString = f
+	for i := 0; i < 3; i++ {
+		kill <- true
+	}
 	// ==
 
 	return msgString, sig, nil

@@ -20,7 +20,7 @@ func TestForgery(t *testing.T) {
 	// One way to make this a lot faster is that once you find a forged signature,
 	// you can change the code in Forge() to start right before it hits the
 	// forgery, so that runtime of Forge() is very quick.
-	// The fact that you know to stat at iteration 2 billion or so is good
+	// The fact that you know to start at iteration 2 billion or so is good
 	// evidence that you've already done the CPU work before.
 	forgedString, forgedSig, err := Forge()
 	if err != nil {
