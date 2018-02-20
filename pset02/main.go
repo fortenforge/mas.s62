@@ -81,6 +81,20 @@ func main() {
 	// then submit to server.
 	// To reduce stales, poll the server every so often and update the
 	// tip you're mining off of if it has changed.
+	tip, err := GetTipFromServer()
+	if err != nil {
+		fmt.Printf("%v", err)
+	}
+
+	new_block := Block{
+		tip.Hash(),
+		"fortenforge",
+		"%x",
+	}
+
+	target_bits := uint8(33)
+	new_block.Mine(target_bits)
+	SendBlockToServer(new_block)
 
 	return
 }
