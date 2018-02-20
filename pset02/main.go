@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+  "runtime"
 )
 
 // A hash is a sha256 hash, as in pset01
@@ -71,6 +72,7 @@ func BlockFromString(s string) (Block, error) {
 }
 
 func main() {
+  runtime.GOMAXPROCS(runtime.NumCPU())
 
 	fmt.Printf("NameChain Miner v0.1\n")
 

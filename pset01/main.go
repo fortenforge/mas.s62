@@ -25,9 +25,11 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+  "runtime"
 )
 
 func main() {
+  runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// Define your message
 	textString := "1"

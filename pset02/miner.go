@@ -21,7 +21,7 @@ func (self *Block) Mine(targetBits uint8) {
 	out := make(chan uint64)
 	kill := make(chan bool)
 	nonce := uint64(0)
-	NPROC := 4
+	NPROC := 8
 
 	for g := 0; g < NPROC; g++ {
 		go func(nonce uint64) {
