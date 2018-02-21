@@ -31,7 +31,8 @@ func (self *Block) Mine(targetBits uint8, kill chan bool, out chan uint64) {
 					attemptString := fmt.Sprintf(blockString, nonce)
 					if CheckWork(attemptString) {
 						out <- nonce
-						fmt.Printf("%v\n", attemptString)
+						fmt.Printf("Found valid nonce!: %v\n", nonce)
+						fmt.Printf("Attempt: %v\n", attemptString)
 						return
 					}
 					nonce++
@@ -40,11 +41,6 @@ func (self *Block) Mine(targetBits uint8, kill chan bool, out chan uint64) {
 		}(nonce)
 		nonce += (1 << 30)
 	}
-	nonce = <- out
-	for i := 0; i < 3; i++ {
-		kill <- true
-	}
-	self.Nonce = fmt.Sprintf("%x", nonce)
 	return
 }
 
