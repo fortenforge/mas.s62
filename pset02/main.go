@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
   "runtime"
+	"time"
 )
 
 // A hash is a sha256 hash, as in pset01
@@ -72,7 +73,8 @@ func BlockFromString(s string) (Block, error) {
 }
 
 func main() {
-  runtime.GOMAXPROCS(runtime.NumCPU())
+	NPROCS := runtime.NumCPU()
+  runtime.GOMAXPROCS(NPROCS)
 
 	fmt.Printf("NameChain Miner v0.1\n")
 
@@ -83,20 +85,41 @@ func main() {
 	// then submit to server.
 	// To reduce stales, poll the server every so often and update the
 	// tip you're mining off of if it has changed.
-	tip, err := GetTipFromServer()
-	if err != nil {
-		fmt.Printf("%v", err)
-	}
-
-	new_block := Block{
-		tip.Hash(),
-		"fortenforge",
-		"%x",
-	}
-
+	tip := Block{sha256.Sum256([]byte("")), "", ""}
+	new_block := Block{sha256.Sum256([]byte("")), "", ""}
 	target_bits := uint8(33)
-	new_block.Mine(target_bits)
-	SendBlockToServer(new_block)
+	kill := make(chan bool)
+	out := make(chan uint64)
 
+	for {
+		select {
+		case <- time.After(time.Duration(5) * time.Second):
+			new_tip, err := GetTipFromServer()
+			if err != nil{
+				fmt.Printf("%v\n", err)
+			}
+			if new_tip.Nonce != tip.Nonce {
+				// Someone mined a block first :(
+				fmt.Printf("New Block!: %v\n")
+				for i := 0; i < NPROCS; i++ {
+					kill <- true
+				}
+				tip = new_tip
+				new_block = Block{
+					tip.Hash(),
+					"fortenforge",
+					"%x",
+				}
+				go new_block.Mine(target_bits, kill, out)
+			}
+		case nonce := <- out:
+			for i := 0; i < NPROCS - 1; i++ {
+				kill <- true
+			}
+			new_block.Nonce = fmt.Sprintf("%x", nonce)
+			fmt.Printf("Mined a block!: %v\n")
+			SendBlockToServer(new_block)
+		}
+	}
 	return
 }

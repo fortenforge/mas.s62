@@ -12,14 +12,12 @@ import (
 // Mine mines a block by varying the nonce until the hash has targetBits 0s in
 // the beginning.  Could take forever if targetBits is too high.
 // Modifies a block in place by using a pointer receiver.
-func (self *Block) Mine(targetBits uint8) {
+func (self *Block) Mine(targetBits uint8, kill chan bool, out chan uint64) {
 	// your mining code here
 	// also feel free to get rid of this method entirely if you want to
 	// organize things a different way; this is just a suggestion
 	blockString := self.ToString()
 
-	out := make(chan uint64)
-	kill := make(chan bool)
 	nonce := uint64(0)
 	NPROC := 8
 
