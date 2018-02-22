@@ -90,6 +90,7 @@ func main() {
 	target_bits := uint8(33)
 	kill := make(chan bool)
 	out := make(chan uint64)
+	first := true
 
 	for {
 		select {
@@ -100,9 +101,13 @@ func main() {
 			}
 			if new_tip.Nonce != tip.Nonce {
 				// Someone mined a block first :(
-				fmt.Printf("New Block!: %v\n")
-				for i := 0; i < NPROCS; i++ {
-					kill <- true
+				fmt.Printf("New Block!\n")
+				if !first {
+					for i := 0; i < NPROCS; i++ {
+						kill <- true
+					}
+				} else{
+					first = false
 				}
 				tip = new_tip
 				new_block = Block{
@@ -117,7 +122,7 @@ func main() {
 				kill <- true
 			}
 			new_block.Nonce = fmt.Sprintf("%x", nonce)
-			fmt.Printf("Mined a block!: %v\n")
+			fmt.Printf("Mined a block!\n")
 			SendBlockToServer(new_block)
 		}
 	}
