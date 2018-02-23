@@ -106,7 +106,7 @@ func main() {
 					for i := 0; i < NPROCS; i++ {
 						kill <- true
 					}
-				} else{
+				} else {
 					first = false
 				}
 				tip = new_tip
@@ -121,6 +121,7 @@ func main() {
 			for i := 0; i < NPROCS - 1; i++ {
 				kill <- true
 			}
+			first = true
 			new_block.Nonce = fmt.Sprintf("%x", nonce)
 			fmt.Printf("Mined a block!\n")
 			SendBlockToServer(new_block)
